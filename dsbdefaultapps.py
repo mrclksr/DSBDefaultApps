@@ -85,25 +85,25 @@ class MainWindow(QMainWindow):
 
 	def apply_changes(self):
 		os.system("xdg-settings set default-web-browser " +
-				  self.browser_cbb.currentText())
+				  self.browser_cbb.currentData())
 		os.system("xdg-mime default {} inode/directory" .
-				  format(self.fm_cbb.currentText()))
+				  format(self.fm_cbb.currentData()))
 		os.system("xdg-mime default {} x-scheme-handler/mailto" .
-				  format(self.mailer_cbb.currentText()))
+				  format(self.mailer_cbb.currentData()))
 		self.quit()
 
 	def quit(self):
 		sys.exit(0)
 
 	def create_app_cbb(self, key):
-		n = 0
-		index = 0
+		n, index = 0, 0
 		cbb = QComboBox()
 		for f in self.app_list[key]:
-			if self.default_apps[key] == f:
+			if self.default_apps[key] == f.file:
 				index = n
 			n = n + 1
-			cbb.addItem(f)
+			icon = QIcon.fromTheme(f.icon)
+			cbb.addItem(icon, f.name, f.file)
 		cbb.setCurrentIndex(index)
 		return cbb
 
@@ -145,8 +145,9 @@ class MainWindow(QMainWindow):
 
 	def read_desktopfile(self, path):
 		d = DesktopFile()
+		in_desktop_entry_section = None
 		fallback_name = os.path.basename(path)
-		if LANG and LANG != "":
+		if LANG and LANG != '':
 			name_rx = re.compile('^Name\\[' + LANG + '\\]=(.*)$')
 		fb_name_rx = re.compile('^Name=(.*)$')
 		try:
@@ -154,6 +155,12 @@ class MainWindow(QMainWindow):
 		except FileNotFoundError:
 			return None
 		for l in f:
+			if not in_desktop_entry_section:
+				if l.strip('\n') == '[Desktop Entry]':
+					in_desktop_entry_section = 1
+				continue
+			elif l.startswith('['):
+				break
 			if not d.name:
 				m = name_rx.match(l)
 				if m:
@@ -193,17 +200,16 @@ class MainWindow(QMainWindow):
 					continue
 				if self.matches_category(path, 'Email'):
 					df = self.read_desktopfile(path)
-					mailer.append(f)
-					#print(df.icon)
+					if df:
+						mailer.append(df)
 				elif self.matches_category(path, 'WebBrowser'):
-					browser.append(f)
-				elif self.matches_category(path, 'FileManager'):
-					print(path)
-					fms.append(f)
-					df = None
 					df = self.read_desktopfile(path)
 					if df:
-						print(df.name)
+						browser.append(df)
+				elif self.matches_category(path, 'FileManager'):
+					df = self.read_desktopfile(path)
+					if df:
+						fms.append(df)
 		return { 'mailer': mailer, 'browser': browser, 'fm': fms }
 
 def main():
