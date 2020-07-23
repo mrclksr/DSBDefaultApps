@@ -34,12 +34,18 @@ import os, re, sys
 
 PROGRAM			= '@PROGRAM@'
 LOCALE_PATH		= '@LOCALE_PATH@'
-
+LANG			= os.environ['LANG'].split('_')[0]
 PREFIX			= '/usr/local'
 PATH_APPS_DIRS  = [ 'share/applications' ]
 
 WINDOW_TITLE = 'Set default applications'
 WINDOW_WIDTH, WINDOW_HEIGHT = 300, 200
+
+class DesktopFile:
+	def __init__(self):
+		self.name = None
+		self.path = None
+		self.icon = None
 
 class MainWindow(QMainWindow):
 	def __init__(self, *args, **kwargs):
@@ -136,12 +142,44 @@ class MainWindow(QMainWindow):
 	
 	def get_home_dir(self):
 		return pwd.getpwuid(os.getuid()).pw_dir
-	
+
+	def read_desktopfile(self, path):
+		d = DesktopFile()
+		fallback_name = os.path.basename(path)
+		if LANG and LANG != "":
+			name_rx = re.compile('^Name\\[' + LANG + '\\]=(.*)$')
+		fb_name_rx = re.compile('^Name=(.*)$')
+		try:
+			f = open(path, 'r')
+		except FileNotFoundError:
+			return None
+		for l in f:
+			if not d.name:
+				m = name_rx.match(l)
+				if m:
+					d.name = m.group(1)
+					continue
+				m = fb_name_rx.match(l)
+				if m:
+					fallback_name = m.group(1)
+					continue
+			if not d.icon:
+				m = re.match('^Icon=(.*)$', l)
+				if m:
+					d.icon = m.group(1)
+		f.close()
+		if not d.name:
+			d.name = fallback_name
+		d.path = path
+		d.file = os.path.basename(path)
+		return d
+
 	def get_app_list(self):
 		dirs = []
 		fms = []
 		mailer = []
 		browser = []
+		df = DesktopFile
 		for d in PATH_APPS_DIRS:
 			dirs.append(PREFIX + '/' + d)
 		for d in PATH_APPS_DIRS:
@@ -154,11 +192,18 @@ class MainWindow(QMainWindow):
 				if not isfile(path):
 					continue
 				if self.matches_category(path, 'Email'):
+					df = self.read_desktopfile(path)
 					mailer.append(f)
+					#print(df.icon)
 				elif self.matches_category(path, 'WebBrowser'):
 					browser.append(f)
 				elif self.matches_category(path, 'FileManager'):
+					print(path)
 					fms.append(f)
+					df = None
+					df = self.read_desktopfile(path)
+					if df:
+						print(df.name)
 		return { 'mailer': mailer, 'browser': browser, 'fm': fms }
 
 def main():
