@@ -1,0 +1,109 @@
+#!/usr/local/bin/python3.7
+#
+# Copyright (c) 2020 Marcel Kaiser. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+import os
+import sys
+sys.path.append('@DATADIR@')
+import xdg
+
+PROGRAM		 = '@PROGRAM@'
+LOCALE_PATH	 = '@LOCALE_PATH@'
+
+WINDOW_TITLE = 'Set default applications'
+WINDOW_WIDTH, WINDOW_HEIGHT = 300, 200
+
+class MainWindow(QMainWindow):
+	def __init__(self, *args, **kwargs):
+		super(MainWindow, self).__init__(*args, **kwargs)
+		container = QWidget()
+		layout = QVBoxLayout(container)
+		icon = QIcon.fromTheme('preferences-desktop')
+		self.setWindowTitle(WINDOW_TITLE)
+		self.setMinimumSize(WINDOW_WIDTH, WINDOW_HEIGHT)
+		self.setWindowIcon(icon)
+		self.setContentsMargins(10, 1, 10, 1)
+
+		self.app_list = xdg.get_app_list()
+		self.default_apps = xdg.get_defaults()
+
+		self.browser_cbb = self.create_app_cbb('browser')
+		self.mailer_cbb = self.create_app_cbb('mailer')
+		self.fm_cbb = self.create_app_cbb('fm')
+		
+		form = QFormLayout()
+		form.addRow(QLabel(self.tr('Default Browser:')), self.browser_cbb)
+		form.addRow(QLabel(self.tr('Default Mailer:')), self.mailer_cbb)
+		form.addRow(QLabel(self.tr('Default Filemanager:')), self.fm_cbb)
+		layout.addLayout(form)
+		
+		bbox = QHBoxLayout()
+		ok_bt = QPushButton(self.tr('&Ok'))
+		cancel_bt = QPushButton(self.tr('&Cancel'))
+		bbox.addWidget(ok_bt, 1, Qt.AlignRight)
+		bbox.addWidget(cancel_bt, 0, Qt.AlignRight)
+
+		layout.addLayout(bbox)
+		self.setCentralWidget(container)
+
+		ok_bt.clicked.connect(self.apply_changes)
+		cancel_bt.clicked.connect(self.quit)
+
+	def apply_changes(self):
+		xdg.set_default('browser', self.browser_cbb.currentData())
+		xdg.set_default('fm', self.fm_cbb.currentData())
+		xdg.set_default('mailer', self.mailer_cbb.currentData())
+		self.quit()
+
+	def quit(self):
+		sys.exit(0)
+
+	def create_app_cbb(self, key):
+		n, index = 0, 0
+		cbb = QComboBox()
+		for f in self.app_list[key]:
+			if self.default_apps[key] == f.file:
+				index = n
+			n = n + 1
+			icon = QIcon.fromTheme(f.icon)
+			cbb.addItem(icon, f.name, f.file)
+		cbb.setCurrentIndex(index)
+		return cbb
+
+def main():
+	app = QApplication(sys.argv)
+	QCoreApplication.setApplicationName(PROGRAM)
+	os.environ['RESOURCE_NAME'] = PROGRAM
+	translator = QTranslator()
+	if translator.load(QLocale(), PROGRAM, '_', LOCALE_PATH):
+		app.installTranslator(translator)
+	win = MainWindow()
+	win.show()
+	sys.exit(app.exec_())
+
+if __name__ == '__main__':
+	main()

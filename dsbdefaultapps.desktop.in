@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Define default applications
+Name[de]=Definiere Standard-Anwendungen
+Exec=@PROGRAM@
+Icon=preferences-desktop
+Terminal=false
+StartupNotify=True
+Type=Application
+Categories=Settings;
