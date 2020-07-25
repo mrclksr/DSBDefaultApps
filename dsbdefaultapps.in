@@ -33,8 +33,7 @@ import xdg
 PROGRAM		 = '@PROGRAM@'
 LOCALE_PATH	 = '@LOCALE_PATH@'
 
-WINDOW_TITLE = 'Set default applications'
-WINDOW_WIDTH, WINDOW_HEIGHT = 300, 200
+WINDOW_WIDTH, WINDOW_HEIGHT = 360, 200
 
 class MainWindow(QMainWindow):
 	def __init__(self, *args, **kwargs):
