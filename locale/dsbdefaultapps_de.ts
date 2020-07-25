@@ -4,29 +4,34 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../dsbdefaultapps" line="59"/>
+        <location filename="../dsbdefaultapps" line="57"/>
         <source>Default Browser:</source>
         <translation>Standard-Browser:</translation>
     </message>
     <message>
-        <location filename="../dsbdefaultapps" line="60"/>
+        <location filename="../dsbdefaultapps" line="58"/>
         <source>Default Mailer:</source>
         <translation>Standard-Mailer:</translation>
     </message>
     <message>
-        <location filename="../dsbdefaultapps" line="61"/>
+        <location filename="../dsbdefaultapps" line="59"/>
         <source>Default Filemanager:</source>
         <translation>Standard-Dateimanager:</translation>
     </message>
     <message>
-        <location filename="../dsbdefaultapps" line="65"/>
+        <location filename="../dsbdefaultapps" line="63"/>
         <source>&amp;Ok</source>
         <translation>&amp;Ok</translation>
     </message>
     <message>
-        <location filename="../dsbdefaultapps" line="66"/>
+        <location filename="../dsbdefaultapps" line="64"/>
         <source>&amp;Cancel</source>
         <translation>&amp;Abbrechen</translation>
+    </message>
+    <message>
+        <location filename="../dsbdefaultapps" line="44"/>
+        <source>Set default applications</source>
+        <translation>Definiere Standard-Anwendungen</translation>
     </message>
 </context>
 </TS>
