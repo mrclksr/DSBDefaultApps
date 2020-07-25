@@ -41,7 +41,7 @@ class MainWindow(QMainWindow):
 		container = QWidget()
 		layout = QVBoxLayout(container)
 		icon = QIcon.fromTheme('preferences-desktop')
-		self.setWindowTitle(WINDOW_TITLE)
+		self.setWindowTitle(self.tr('Set default applications'))
 		self.setMinimumSize(WINDOW_WIDTH, WINDOW_HEIGHT)
 		self.setWindowIcon(icon)
 		self.setContentsMargins(10, 1, 10, 1)
