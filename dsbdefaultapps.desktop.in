@@ -1,6 +1,6 @@
 [Desktop Entry]
-Name=Define default applications
-Name[de]=Definiere Standard-Anwendungen
+Name=Default Desktop Applications
+Name[de]=Standard-Desktopanwendungen
 Exec=@PROGRAM@
 Icon=preferences-desktop-default-applications
 Terminal=false

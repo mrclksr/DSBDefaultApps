@@ -30,8 +30,8 @@
     </message>
     <message>
         <location filename="../dsbdefaultapps" line="44"/>
-        <source>Set default applications</source>
-        <translation>Definiere Standard-Anwendungen</translation>
+        <source>Default Desktop Applications</source>
+        <translation>Standard-Desktopanwendungen</translation>
     </message>
 </context>
 </TS>
