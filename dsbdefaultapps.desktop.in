@@ -2,7 +2,7 @@
 Name=Define default applications
 Name[de]=Definiere Standard-Anwendungen
 Exec=@PROGRAM@
-Icon=preferences-desktop
+Icon=preferences-desktop-default-applications
 Terminal=false
 StartupNotify=True
 Type=Application
