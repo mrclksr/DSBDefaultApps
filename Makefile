@@ -45,4 +45,4 @@ clean:
 	-rm -f ${PROGRAM}
 	-rm -f ${PROGRAM}.desktop
 	-rm -f locale/*.qm
-
+	-rm -rf __pycache__
