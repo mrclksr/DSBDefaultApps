@@ -26,14 +26,137 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-import os, sys
-sys.path.append('@DATADIR@')
-import xdg
+import os, sys, pwd, re
+from os import listdir
+from os.path import isfile, join
+from subprocess import Popen, PIPE
 
-PROGRAM		 = '@PROGRAM@'
-LOCALE_PATH	 = '@LOCALE_PATH@'
-
+PREFIX		   = '@PREFIX@'
+PROGRAM        = '@PROGRAM@'
+LOCALE_PATH    = '@LOCALE_PATH@'
+PATH_APPS_DIRS = [ 'share/applications' ]
 WINDOW_WIDTH, WINDOW_HEIGHT = 360, 200
+
+class DesktopFile:
+	def __init__(self):
+		self.name = None
+		self.path = None
+		self.icon = None
+		self.file = None
+
+def get_proc_output(args):
+	try:
+		proc = Popen(args, stdin=None, stdout=PIPE, stderr=None)
+	except OSError:
+		print("Failed to Popen({})".format(args))
+		sys.exit(1)
+	line = proc.stdout.read().replace(b'\n', b'').decode('utf-8')
+	proc.wait()
+	return line
+
+def get_defaults():
+	mailer = get_proc_output(['xdg-settings', 'get',
+							  'default-url-scheme-handler', 'mailto'])
+	browser = get_proc_output(['xdg-settings', 'get', 'default-web-browser'])
+	fm = get_proc_output(['xdg-mime', 'query', 'default', 'inode/directory'])
+	return { 'mailer': mailer, 'browser': browser, 'fm': fm }
+
+def set_default(app_type, app):
+	cmds = {
+		'browser': 'xdg-settings set default-web-browser {}'.format(app),
+		'mailer' : 'xdg-mime default {} x-scheme-handler/mailto'.format(app),
+		'fm'     : 'xdg-mime default {} inode/directory'.format(app)
+	}
+	err = os.system(cmds[app_type])
+	if err != 0:
+		sys.stderr.write('Command "{}" returned with exit code {}\n'
+			.format(cmds[app_type], (err >> 8)))
+
+def matches_category(desktopfile, category):
+	rx = re.compile('^Categories=.*' + category + '.*')
+	try:
+		f = open(desktopfile, 'r')
+	except FileNotFoundError:
+		return None
+	for l in f:
+		m = rx.match(l)
+		if m:
+			f.close()
+			return True
+	f.close()
+	return None
+	
+def get_home_dir():
+	return pwd.getpwuid(os.getuid()).pw_dir
+
+def read_desktopfile(path):
+	d = DesktopFile()
+	in_desktop_entry_section = None
+	fallback_name = os.path.basename(path)
+
+	if os.environ['LANG']:
+		LANG = os.environ['LANG'].split('_')[0]
+		name_rx = re.compile('^Name\\[' + LANG + '\\]=(.*)$')
+	fb_name_rx = re.compile('^Name=(.*)$')
+	try:
+		f = open(path, 'r')
+	except FileNotFoundError:
+		return None
+	for l in f:
+		if not in_desktop_entry_section:
+			if l.strip('\n ') == '[Desktop Entry]':
+				in_desktop_entry_section = 1
+			continue
+		elif l.strip().startswith('['):
+			break
+		if not d.name:
+			m = name_rx.match(l)
+			if m:
+				d.name = m.group(1)
+				continue
+			m = fb_name_rx.match(l)
+			if m:
+				fallback_name = m.group(1)
+				continue
+		if not d.icon:
+			m = re.match('^Icon=(.*)$', l)
+			if m:
+				d.icon = m.group(1)
+	f.close()
+	if not d.name:
+		d.name = fallback_name
+	d.path = path
+	d.file = os.path.basename(path)
+	return d
+
+def get_app_list():
+	dirs, fms, mailer, browser = [], [], [], []
+
+	df = DesktopFile
+	for d in PATH_APPS_DIRS:
+		dirs.append(os.path.join(PREFIX, d))
+	for d in PATH_APPS_DIRS:
+		dirs.append(os.path.join(get_home_dir(), '.local', d))
+	for d in dirs:
+		if not os.path.exists(d):
+			continue
+		for f in listdir(d):
+			path = join(d, f)
+			if not isfile(path):
+				continue
+			if matches_category(path, 'Email'):
+				df = read_desktopfile(path)
+				if df:
+					mailer.append(df)
+			elif matches_category(path, 'WebBrowser'):
+				df = read_desktopfile(path)
+				if df:
+					browser.append(df)
+			elif matches_category(path, 'FileManager'):
+				df = read_desktopfile(path)
+				if df:
+					fms.append(df)
+	return { 'mailer': mailer, 'browser': browser, 'fm': fms }
 
 class MainWindow(QMainWindow):
 	def __init__(self, *args, **kwargs):
@@ -46,9 +169,8 @@ class MainWindow(QMainWindow):
 		self.setWindowIcon(icon)
 		self.setContentsMargins(10, 1, 10, 1)
 
-		self.app_list = xdg.get_app_list()
-		self.default_apps = xdg.get_defaults()
-
+		self.app_list = get_app_list()
+		self.default_apps = get_defaults()
 		self.browser_cbb = self.create_app_cbb('browser')
 		self.mailer_cbb = self.create_app_cbb('mailer')
 		self.fm_cbb = self.create_app_cbb('fm')
@@ -72,9 +194,9 @@ class MainWindow(QMainWindow):
 		cancel_bt.clicked.connect(self.quit)
 
 	def apply_changes(self):
-		xdg.set_default('browser', self.browser_cbb.currentData())
-		xdg.set_default('fm', self.fm_cbb.currentData())
-		xdg.set_default('mailer', self.mailer_cbb.currentData())
+		set_default('browser', self.browser_cbb.currentData())
+		set_default('fm', self.fm_cbb.currentData())
+		set_default('mailer', self.mailer_cbb.currentData())
 		self.quit()
 
 	def quit(self):
