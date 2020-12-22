@@ -142,6 +142,8 @@ def get_app_list():
 			continue
 		for f in listdir(d):
 			path = join(d, f)
+			if not re.match('.*\.desktop$', path):
+				continue
 			if not isfile(path):
 				continue
 			if matches_category(path, 'Email'):
