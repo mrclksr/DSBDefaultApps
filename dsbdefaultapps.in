@@ -31,9 +31,9 @@ from os import listdir
 from os.path import isfile, join
 from subprocess import Popen, PIPE
 
-PREFIX		   = '@PREFIX@'
+PREFIX         = '@PREFIX@'
 PROGRAM        = '@PROGRAM@'
-LOCALE_PATH    = '@LOCALE_PATH@'
+LOCALE_PATH	   = '@LOCALE_PATH@'
 PATH_APPS_DIRS = [ 'share/applications' ]
 WINDOW_WIDTH, WINDOW_HEIGHT = 360, 200
 
@@ -176,16 +176,18 @@ class MainWindow(QMainWindow):
 		self.browser_cbb = self.create_app_cbb('browser')
 		self.mailer_cbb = self.create_app_cbb('mailer')
 		self.fm_cbb = self.create_app_cbb('fm')
-		
+
 		form = QFormLayout()
 		form.addRow(QLabel(self.tr('Default Browser:')), self.browser_cbb)
 		form.addRow(QLabel(self.tr('Default Mailer:')), self.mailer_cbb)
 		form.addRow(QLabel(self.tr('Default Filemanager:')), self.fm_cbb)
 		layout.addLayout(form)
-		
+
 		bbox = QHBoxLayout()
-		ok_bt = QPushButton(self.tr('&Ok'))
-		cancel_bt = QPushButton(self.tr('&Cancel'))
+		ok_icon = QIcon.fromTheme('ok')
+		cancel_icon = QIcon.fromTheme('cancel')
+		ok_bt = QPushButton(ok_icon, self.tr('&Ok'))
+		cancel_bt = QPushButton(cancel_icon, self.tr('&Cancel'))
 		bbox.addWidget(ok_bt, 1, Qt.AlignRight)
 		bbox.addWidget(cancel_bt, 0, Qt.AlignRight)
 
